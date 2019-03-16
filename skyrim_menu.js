@@ -11,6 +11,8 @@ app.Skyrim_Menu = {
     
     PLAYER: "",
     
+    item_information_window_obj: {},
+    
     init: function()
     {
         console.log(player);
@@ -46,6 +48,7 @@ app.Skyrim_Menu = {
                     if(this.chosen_item > 0)
                     {
                         this.chosen_item--;
+                        this.renderChosenItemInfoWindow();
                     }
                 }
                 this.can_scroll = false;
@@ -67,6 +70,7 @@ app.Skyrim_Menu = {
                     if(this.chosen_item < (this.current_item_list.length - 1))
                     {
                         this.chosen_item++;
+                        this.renderChosenItemInfoWindow();
                     }
                 }
                 this.can_scroll = false;
@@ -78,6 +82,7 @@ app.Skyrim_Menu = {
             {
                 this.item_list_showing = true;
                 this.createItemList(item_type_list);
+                this.renderChosenItemInfoWindow();
                 this.can_scroll = false;
             }
         }
@@ -105,6 +110,7 @@ app.Skyrim_Menu = {
         canvas_context.fillRect((section_xpos + (section_width - section_border_buffer - section_border_width)), 0, section_border_width, canvas.height);
         //---render section list
         canvas_context.textBaseline = "middle";
+        canvas_context.textAlign = "left"; 
         for(var item_type = 0; item_type < item_type_list.length; item_type++)
         {
             if((item_type >= (this.chosen_item_type - visible_limit)) && (item_type <= (this.chosen_item_type + visible_limit)))
@@ -135,7 +141,73 @@ app.Skyrim_Menu = {
         if(this.item_list_showing == true)
         {
             this.renderItemList();
+            this.renderSelectedItemSection();
         }
+    },
+    
+    renderChosenItemInfoWindow: function()
+    {
+        //---RENDERING ITEM ATTRIBUTES
+        var info_window_attr = [
+            {
+                item_prop_name: "weapon_base_damage",
+                item_attr_name: "DAMAGE"
+            },
+            {
+                item_prop_name: "item_weight",
+                item_attr_name: "WEIGHT"
+            },
+            {
+                item_prop_name: "item_value",
+                item_attr_name: "VALUE"
+            }
+        ];
+        var info_window_max_width = 200;
+        var info_widnow_attr_padding = 40;
+        var info_window_total_attr_width = 0;
+        // (1) check which attributes the chosen item has
+        for(var attr = 0; attr < info_window_attr.length; attr++)
+        {
+            console.log(info_window_attr[attr].item_attr_name);
+            if(this.current_item_list[this.chosen_item][info_window_attr[attr].item_prop_name])
+            {
+                info_window_attr[attr].item_attr_value = this.current_item_list[this.chosen_item][info_window_attr[attr].item_prop_name];
+                info_window_attr[attr].item_attr_name_xpos = info_window_total_attr_width;
+                // (2) calculate the width of the attributes
+                var attr_name_font = "11px Arial";
+                var attr_value_font = "20px Arial";
+
+                canvas_context.save();
+                    canvas_context.font = attr_name_font;
+                    info_window_total_attr_width += canvas_context.measureText(info_window_attr[attr].item_attr_name).width;
+                    info_window_attr[attr].item_attr_value_xpos = info_window_total_attr_width;
+                    canvas_context.font = attr_value_font;
+                    info_window_total_attr_width += canvas_context.measureText("0000").width;
+                canvas_context.restore();
+                
+                
+                /*var attr_width = 0;
+                var attr_name_font = "11px Arial";
+                var attr_value_font = "20px Arial";
+                canvas_context.save();
+                    canvas_context.font = attr_name_font;
+                    attr_width += canvas_context.measureText(info_window_attr[attr].item_attr_name).width;
+                    canvas_context.font = attr_value_font;
+                    attr_width += canvas_context.measureText(this.current_item_list[this.chosen_item][info_window_attr[attr].item_prop_name]).width;
+                canvas_context.restore();
+                //info_window_attr[attr].attr_width = attr_width;
+                info_window_total_attr_width += attr_width + 10;*/
+            }
+            else
+            {
+                info_window_attr.splice(attr,1);
+                attr--;
+            }
+        }
+        console.log(info_window_attr);
+        console.log(info_window_total_attr_width);
+        this.item_information_window_obj.attr_array = info_window_attr;
+        this.item_information_window_obj.info_window_total_attr_width = info_window_total_attr_width;
     },
     
     
@@ -157,6 +229,7 @@ app.Skyrim_Menu = {
         
         //---render list
         canvas_context.textBaseline = "middle";
+        canvas_context.textAlign = "left"; 
         for(var item = 0; item < this.current_item_list.length; item++)
         {
             if((item >= (this.chosen_item - visible_limit)) && (item <= (this.chosen_item + visible_limit)))
@@ -184,8 +257,6 @@ app.Skyrim_Menu = {
                 canvas_context.fillText(this.current_item_list[item].name, item_name_xpos, item_name_ypos);
             }
         }
-        
-        
     },
     
     createItemList: function(item_type_list_)
@@ -226,6 +297,62 @@ app.Skyrim_Menu = {
                 return 0;
             }
         });
+    },
+    
+    renderSelectedItemSection: function()
+    {
+        //---render selected item info section
+        var info_window_width = 230;
+        var info_window_height = 170;
+        var info_window_r_xpos = (canvas.width - 25);
+        var info_window_ypos_top = 100;
+        //---render selected item info window
+        canvas_context.beginPath();
+        canvas_context.moveTo(info_window_r_xpos, info_window_ypos_top);
+        canvas_context.lineTo((info_window_r_xpos - info_window_width), info_window_ypos_top);
+        canvas_context.lineTo((info_window_r_xpos - info_window_width), (info_window_ypos_top + info_window_height));
+        canvas_context.lineTo(info_window_r_xpos, (info_window_ypos_top + info_window_height));
+        canvas_context.lineTo(info_window_r_xpos, info_window_ypos_top);
+        canvas_context.stroke();
+        //---render item name
+        canvas_context.textAlign = "center"; 
+        canvas_context.fillStyle = "white";
+        canvas_context.font = "23px Arial";
+        canvas_context.fillText(this.current_item_list[this.chosen_item].name, (info_window_r_xpos - (info_window_width/2)), info_window_ypos_top + 20);
+
+        /*
+        //---render item value
+        canvas_context.textAlign = "left"; 
+        canvas_context.font = "11.5px Arial";
+        canvas_context.fillText("VALUE", (info_window_r_xpos - (info_window_width/2)), (info_window_ypos_top + 50));
+        var ff = canvas_context.measureText("VALUE").width;
+        canvas_context.font = "20px Arial";
+        //canvas_context.fillText(this.current_item_list[this.chosen_item].item_value, (info_window_r_xpos - (info_window_width/2)), (info_window_ypos_top + 50));
+        canvas_context.fillText(this.current_item_list[this.chosen_item].item_value, (info_window_r_xpos - (info_window_width/2)) + ff, (info_window_ypos_top + 50));
+        
+        
+        //---render item weight
+        canvas_context.textAlign = "left"; 
+        canvas_context.font = "11.5px Arial";
+        canvas_context.fillText("WEIGHT", (info_window_r_xpos - (info_window_width/2)), (info_window_ypos_top + 100));
+        var ff = canvas_context.measureText("WEIGHT").width;
+        canvas_context.font = "20px Arial";
+        canvas_context.fillText(this.current_item_list[this.chosen_item].item_weight, (info_window_r_xpos - (info_window_width/2)) + ff, (info_window_ypos_top + 100));
+        */
+        
+        
+        for(var attr = 0; attr < this.item_information_window_obj.attr_array.length; attr++)
+        {
+            var attr_name_xpos = ((info_window_r_xpos - (info_window_width/2)) - (this.item_information_window_obj.info_window_total_attr_width/2)) + this.item_information_window_obj.attr_array[attr].item_attr_name_xpos;
+            var attr_value_xpos = ((info_window_r_xpos - (info_window_width/2)) - (this.item_information_window_obj.info_window_total_attr_width/2)) + this.item_information_window_obj.attr_array[attr].item_attr_value_xpos;
+            
+            canvas_context.textAlign = "left";
+            canvas_context.font = "11px Arial";
+            canvas_context.fillText(this.item_information_window_obj.attr_array[attr].item_attr_name, attr_name_xpos, 200);
+            canvas_context.font = "20px Arial";
+            canvas_context.fillText(this.item_information_window_obj.attr_array[attr].item_attr_value, attr_value_xpos, 200);
+        
+        }
     },
     
     update: function()
