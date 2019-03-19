@@ -11,7 +11,9 @@ app.Skyrim_Menu = {
     
     PLAYER: "",
     
-    item_information_window_obj: {},
+    item_information_window_obj: {
+        item_description_lines: []
+    },
     
     init: function()
     {
@@ -147,28 +149,29 @@ app.Skyrim_Menu = {
     
     renderChosenItemInfoWindow: function()
     {
+        var info_window_max_width = 200;
+        var info_widnow_attr_padding = 40;
+        var info_window_total_attr_width = 0;
+        this.item_information_window_obj.item_description_lines = [];
+        
         //---RENDERING ITEM ATTRIBUTES
         var info_window_attr = [
             {
                 item_prop_name: "weapon_base_damage",
-                item_attr_name: "DAMAGE"
+                item_attr_name: "DAMAGE "
             },
             {
                 item_prop_name: "item_weight",
-                item_attr_name: "WEIGHT"
+                item_attr_name: "WEIGHT "
             },
             {
                 item_prop_name: "item_value",
-                item_attr_name: "VALUE"
+                item_attr_name: "VALUE "
             }
         ];
-        var info_window_max_width = 200;
-        var info_widnow_attr_padding = 40;
-        var info_window_total_attr_width = 0;
         // (1) check which attributes the chosen item has
         for(var attr = 0; attr < info_window_attr.length; attr++)
         {
-            console.log(info_window_attr[attr].item_attr_name);
             if(this.current_item_list[this.chosen_item][info_window_attr[attr].item_prop_name])
             {
                 info_window_attr[attr].item_attr_value = this.current_item_list[this.chosen_item][info_window_attr[attr].item_prop_name];
@@ -182,21 +185,8 @@ app.Skyrim_Menu = {
                     info_window_total_attr_width += canvas_context.measureText(info_window_attr[attr].item_attr_name).width;
                     info_window_attr[attr].item_attr_value_xpos = info_window_total_attr_width;
                     canvas_context.font = attr_value_font;
-                    info_window_total_attr_width += canvas_context.measureText("0000").width;
+                    info_window_total_attr_width += canvas_context.measureText("0000  ").width;
                 canvas_context.restore();
-                
-                
-                /*var attr_width = 0;
-                var attr_name_font = "11px Arial";
-                var attr_value_font = "20px Arial";
-                canvas_context.save();
-                    canvas_context.font = attr_name_font;
-                    attr_width += canvas_context.measureText(info_window_attr[attr].item_attr_name).width;
-                    canvas_context.font = attr_value_font;
-                    attr_width += canvas_context.measureText(this.current_item_list[this.chosen_item][info_window_attr[attr].item_prop_name]).width;
-                canvas_context.restore();
-                //info_window_attr[attr].attr_width = attr_width;
-                info_window_total_attr_width += attr_width + 10;*/
             }
             else
             {
@@ -204,12 +194,41 @@ app.Skyrim_Menu = {
                 attr--;
             }
         }
-        console.log(info_window_attr);
-        console.log(info_window_total_attr_width);
         this.item_information_window_obj.attr_array = info_window_attr;
         this.item_information_window_obj.info_window_total_attr_width = info_window_total_attr_width;
+        
+        //---RENDERING ITEM DESCRIPTION
+        if(this.current_item_list[this.chosen_item].item_description)
+        {
+            canvas_context.font = "11px Arial";
+            var item_description_split = this.current_item_list[this.chosen_item].item_description.split(" ");
+            console.log(item_description_split)
+            var current_description_line = "";
+            for(var word = 0; word < item_description_split.length; word++)
+            {
+                if(current_description_line == "")
+                {
+                    current_description_line += item_description_split[word];
+                }
+                else
+                {
+                    if(canvas_context.measureText(current_description_line + " " + item_description_split[word]).width <= info_window_max_width)
+                    {
+                        current_description_line += (" " + item_description_split[word]);
+                    }
+                    else
+                    {
+                        this.item_information_window_obj.item_description_lines.push(current_description_line);
+                        current_description_line = "";
+                    }
+                }
+                if(word == (item_description_split.length - 1))
+                {
+                    this.item_information_window_obj.item_description_lines.push(current_description_line);
+                }
+            }
+        }
     },
-    
     
     renderItemList()
     {
@@ -320,38 +339,29 @@ app.Skyrim_Menu = {
         canvas_context.font = "23px Arial";
         canvas_context.fillText(this.current_item_list[this.chosen_item].name, (info_window_r_xpos - (info_window_width/2)), info_window_ypos_top + 20);
 
-        /*
-        //---render item value
-        canvas_context.textAlign = "left"; 
-        canvas_context.font = "11.5px Arial";
-        canvas_context.fillText("VALUE", (info_window_r_xpos - (info_window_width/2)), (info_window_ypos_top + 50));
-        var ff = canvas_context.measureText("VALUE").width;
-        canvas_context.font = "20px Arial";
-        //canvas_context.fillText(this.current_item_list[this.chosen_item].item_value, (info_window_r_xpos - (info_window_width/2)), (info_window_ypos_top + 50));
-        canvas_context.fillText(this.current_item_list[this.chosen_item].item_value, (info_window_r_xpos - (info_window_width/2)) + ff, (info_window_ypos_top + 50));
-        
-        
-        //---render item weight
-        canvas_context.textAlign = "left"; 
-        canvas_context.font = "11.5px Arial";
-        canvas_context.fillText("WEIGHT", (info_window_r_xpos - (info_window_width/2)), (info_window_ypos_top + 100));
-        var ff = canvas_context.measureText("WEIGHT").width;
-        canvas_context.font = "20px Arial";
-        canvas_context.fillText(this.current_item_list[this.chosen_item].item_weight, (info_window_r_xpos - (info_window_width/2)) + ff, (info_window_ypos_top + 100));
-        */
-        
-        
+        //---RENDERING ITEM ATTRIBUTES
         for(var attr = 0; attr < this.item_information_window_obj.attr_array.length; attr++)
         {
             var attr_name_xpos = ((info_window_r_xpos - (info_window_width/2)) - (this.item_information_window_obj.info_window_total_attr_width/2)) + this.item_information_window_obj.attr_array[attr].item_attr_name_xpos;
             var attr_value_xpos = ((info_window_r_xpos - (info_window_width/2)) - (this.item_information_window_obj.info_window_total_attr_width/2)) + this.item_information_window_obj.attr_array[attr].item_attr_value_xpos;
-            
             canvas_context.textAlign = "left";
             canvas_context.font = "11px Arial";
             canvas_context.fillText(this.item_information_window_obj.attr_array[attr].item_attr_name, attr_name_xpos, 200);
             canvas_context.font = "20px Arial";
             canvas_context.fillText(this.item_information_window_obj.attr_array[attr].item_attr_value, attr_value_xpos, 200);
-        
+        }
+
+        // --- render a description
+        if(this.item_information_window_obj.item_description_lines.length > 0)
+        {
+            canvas_context.font = "11px Arial";
+            for(var description_line = 0; description_line < this.item_information_window_obj.item_description_lines.length; description_line++)
+            {
+                //var attr_name_xpos = ((info_window_r_xpos - (info_window_width/2)) - (this.item_information_window_obj.info_window_total_attr_width/2)) + this.item_information_window_obj.attr_array[attr].item_attr_name_xpos;
+                var xposx = ((info_window_r_xpos - (info_window_width/2)) - (canvas_context.measureText(this.item_information_window_obj.item_description_lines[description_line]).width)/2);
+                
+                canvas_context.fillText(this.item_information_window_obj.item_description_lines[description_line], xposx, 200 + (11 * (description_line + 1)));
+            }
         }
     },
     

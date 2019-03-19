@@ -7,7 +7,7 @@ var player = {
         item_type: "WEAPONS",
         item_value: 300,
         item_weight: 15,
-        description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod"
+        item_description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod"
     },
     {
         name: "item",
@@ -36,6 +36,7 @@ var player = {
         item_type: "MISC.",
         item_value: 5,
         item_weight: 15,
+        item_description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod",
         favorite: true
     },
     {
